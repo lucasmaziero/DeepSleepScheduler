@@ -704,7 +704,12 @@ Scheduler::SleepMode Scheduler::evaluateSleepModeAndEnableWdtIfRequired() {
       wdtSleepTimeMillis = wdtSleepTimeMillisLocal;
       // enable interrupt
       // first timeout will be the interrupt, second system reset
+      // http://forum.arduino.cc/index.php?topic=108870.0
+#if defined( __AVR_ATtiny25__ ) || defined( __AVR_ATtiny45__ ) || defined( __AVR_ATtiny85__ ) || defined( __AVR_ATtiny87__ ) || defined( __AVR_ATtiny167__ )
+      WDTCR |= (1 << WDCE) | (1 << WDIE);
+#else
       WDTCSR |= (1 << WDCE) | (1 << WDIE);
+#endif
       millisBeforeDeepSleep = millis();
       interrupts();
     }
@@ -712,7 +717,11 @@ Scheduler::SleepMode Scheduler::evaluateSleepModeAndEnableWdtIfRequired() {
     // wdt already running, so we woke up due to an other interrupt then WDT.
     // continue sleepting without enabling wdt again
     sleepMode = PWR_DOWN;
+#if defined( __AVR_ATtiny25__ ) || defined( __AVR_ATtiny45__ ) || defined( __AVR_ATtiny85__ ) || defined( __AVR_ATtiny87__ ) || defined( __AVR_ATtiny167__ )
+    WDTCR |= (1 << WDCE) | (1 << WDIE);
+#else
     WDTCSR |= (1 << WDCE) | (1 << WDIE);
+#endif
     // A special case is when the other interrupt scheduled a task between now and before the WDT interrupt occurs.
     // In this case, we prevent SLEEP_MODE_PWR_DOWN until it is scheduled.
     // If the WDT interrupt occurs before that, it is executed earlier as expected because getMillis() will be
